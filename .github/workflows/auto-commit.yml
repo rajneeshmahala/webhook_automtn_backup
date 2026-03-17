@@ -2,13 +2,11 @@ name: Daily DevOps Practice Commit
 
 on:
   schedule:
-    - cron: "0 4 * * *"
-    - cron: "0 9 * * *"
-    - cron: "0 15 * * *"
+    - cron: "0 0 * * *"   # Runs once at midnight UTC to kick off the day's commits
   workflow_dispatch:
 
 permissions:
-  contents: write   # 👈 THIS FIXES 403
+  contents: write
 
 jobs:
   auto-commit:
@@ -18,14 +16,29 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Update File
-        run: |
-          echo "Practice update at $(date)" >> practice-log.md
-
-      - name: Commit & Push
+      - name: Set up Git
         run: |
           git config user.name "rajneeshmahala"
           git config user.email "rajneeshmahala@gmail.com"
-          git add .
-          git commit -m "Daily DevOps practice update $(date)" || echo "No changes"
-          git push
+
+      - name: Make Random Commits (3 to 30)
+        run: |
+          # Pick a random number of commits between 3 and 30
+          NUM_COMMITS=$(( RANDOM % 28 + 3 ))
+          echo "🎯 Today's commit count: $NUM_COMMITS"
+
+          for i in $(seq 1 $NUM_COMMITS); do
+            # Random sleep between commits: 30s to 3 minutes (simulates spread)
+            SLEEP_TIME=$(( RANDOM % 150 + 30 ))
+
+            echo "Practice update #$i at $(date)" >> practice-log.md
+
+            git add .
+            git commit -m "DevOps practice update #$i of $NUM_COMMITS - $(date '+%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
+            git push
+
+            echo "✅ Commit $i/$NUM_COMMITS done. Sleeping ${SLEEP_TIME}s..."
+            sleep $SLEEP_TIME
+          done
+
+          echo "🏁 All $NUM_COMMITS commits pushed for today!"
